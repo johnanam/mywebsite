@@ -1,0 +1,150 @@
+---
+title: "Energy Consumption"
+format: odt
+code-fold: true
+theme: Litera
+---
+
+## [**Effect of Climate Change on Power Usage**]{.underline}
+
+### [**Introduction**]{.underline}
+
+In this study, we investigate the intricate relationship between climate variables (temperature, humidity, and windspeed) and power consumption patterns in the face of climate change. By analyzing historical data using advanced statistical methods, we aim to unravel the subtle links between these variables.
+
+## **Methodoloy**
+
+We applied Multiple regression Analysis to do the analysis.
+
+-   Prior to analysis, data preparation steps included addressing missing values, handling outliers, and structuring the data set for suitability in our econometric analysis.
+
+-   We conducted EDA to gain insights into the data. Visualizations such as scatter plots, were generated to understand the distribution of wages and the relationships between wage determinants.
+
+-   To analyze wage determinants, we chose a multiple linear regression model. With dependent variable wages and independent variables such as education, job experience.
+
+-   **Linearity:** To check if relationships between variables are straight and consistent, we looked at graphs and charts.
+
+-   **Homoscedasticity :** We examined if the spread of data points in our charts was even.
+
+-   **Normality of Residuals:** We wanted our data to look like a bell curve.
+
+-   **Multicollinearity:** We checked if our variables were buddies and did everything together.If they were too close, we separated them or created new groups to avoid confusion.
+
+-   **Autocorrelation:** For time data, we checked if past and future values were friends.
+
+## 
+
+```{r message=FALSE,warning=FALSE}
+library(readr)
+data <- read_csv("C:/Users/HP/OneDrive/Desktop/powerconsumption.csv")
+attach(data)
+```
+
+## Variable selection
+
+library(dplyr)
+
+data1 \<- data %\>%
+
+select(Temperature,Humidity,WindSpeed,PowerConsumption_Zone1) \|\>
+
+slice(1:300)
+
+```{r message=FALSE,warning=FALSE}
+library(dplyr)
+data1 <- data %>%  
+  select(Temperature,Humidity,WindSpeed,PowerConsumption_Zone1) |> 
+  slice(1:300)
+```
+
+## **Model Selection**
+
+```{r message=FALSE,warning=FALSE}
+library(MASS)
+library(performance)
+null_model <- lm(PowerConsumption_Zone1 ~-1,data = data1)
+full_model <- lm(PowerConsumption_Zone1 ~.,data = data1)
+
+```
+
+```{r  message=FALSE,warning=FALSE,}
+library(pander)
+pander(summary(stepAIC(null_model,direction = "forward",scope = list(upper = full_model,lower = null_model))))
+
+```
+
+## **Results**
+
+```{r echo=FALSE, message=FALSE,warning=FALSE}
+library(ggplot2)
+ggplot(data1,aes(x = Temperature,y = PowerConsumption_Zone1))+
+  geom_point() + 
+  geom_smooth(method = "lm",color = "blue")+
+  labs(title = "A scatter plot of Temp. against Power",x = "Temp",y = "Power")
+```
+
+```{r  message=FALSE,warning=FALSE}
+attach(data1)
+cor(Temperature,PowerConsumption_Zone1)
+```
+
+```{r message=FALSE,warning=FALSE}
+library(ggplot2)
+
+ggplot(data1,aes(x = Humidity,y = PowerConsumption_Zone1))+
+  geom_point() + 
+  geom_smooth(method = "lm",color = "blue")+
+  labs(title = "A scatter plot of Humidity. against Power",x = "Humidity",y = "Power")
+```
+
+```{r}
+cor(Humidity,PowerConsumption_Zone1)
+```
+
+```{r}
+ggplot(data1,aes(x = WindSpeed,y = PowerConsumption_Zone1))+
+  geom_point() + 
+  geom_smooth(method = "lm",color = "blue")+
+  labs(title = "A scatter plot of windSpeed. against Power",x = "WindSpeed",y = "Power")
+```
+
+```{r}
+cor(WindSpeed,PowerConsumption_Zone1)
+```
+
+```{r message=FALSE,warning=FALSE}
+# Model building 
+library(pander)
+
+model <- lm(PowerConsumption_Zone1~Temperature+Humidity+WindSpeed)
+
+pander(summary(model))
+
+```
+
+```{r}
+library(car)
+crPlots(model)
+```
+
+```{r}
+# check for homoscedacity
+library(car)
+ncvTest(model)
+```
+
+```{r}
+#test for independence of error
+
+durbinWatsonTest(model)
+```
+
+```{r}
+library(MASS)
+library(performance)
+check_autocorrelation(model)
+```
+
+```{r}
+# checking for multicollinearity
+sqrt(vif(model)) > 2
+```
